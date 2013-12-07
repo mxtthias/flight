@@ -23,11 +23,13 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-  World   = {flight_world, {flight_world, start_link, []},
-	     permanent, 2000, worker, [flight_world]},
-  BirdSup = {bird_sup, {bird_sup, start_link, []},
-	     permanent, 2000, supervisor, [bird_sup]},
-  Children = [World, BirdSup],
+  World     = {flight_world, {flight_world, start_link, []},
+	       permanent, 2000, worker, [flight_world]},
+  BirdSup   = {bird_sup, {bird_sup, start_link, []},
+	       permanent, 2000, supervisor, [bird_sup]},
+  BirdEvent = {bird_event_manager, {bird_event_manager, start_link, []},
+               permanent, 2000, worker, [bird_event_manager]},
+  Children = [World, BirdSup, BirdEvent],
   RestartStrategy = {one_for_one, 0, 1},
   {ok, {RestartStrategy, Children}}.
 
