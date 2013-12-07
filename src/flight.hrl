@@ -1,0 +1,1 @@
+-type position() :: {integer(), integer()}.
