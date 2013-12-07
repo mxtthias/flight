@@ -1,0 +1,12 @@
+{application, flight,
+ [
+  {description, "Flight - a flocking simulation"},
+  {vsn, git},
+  {registered, [flight_app]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { flight_app, []}},
+  {env, []}
+ ]}.
