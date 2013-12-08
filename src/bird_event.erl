@@ -3,7 +3,7 @@
 -behaviour(gen_event).
 
 %% API
--export([start_link/0, add_handler/0, delete_handler/0]).
+-export([start_link/0, add_handler/1, delete_handler/0]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
@@ -11,7 +11,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, { worker_pid }).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -20,8 +20,8 @@
 start_link() ->
   gen_event:start_link().
 
-add_handler() ->
-  bird_event_manager:add_handler({?MODULE, self()}, []).
+add_handler(WorkerPid) ->
+  bird_event_manager:add_handler({?MODULE, self()}, [WorkerPid]).
 
 delete_handler() ->
   bird_event_manager:delete_handler({?MODULE, self()}, []).
@@ -31,8 +31,8 @@ delete_handler() ->
 %%% gen_event callbacks
 %%%===================================================================
 
-init([]) ->
-  {ok, #state{}}.
+init([WorkerPid]) ->
+  {ok, #state{ worker_pid = WorkerPid }}.
 
 handle_event({move, {Id, From, To}}, State) ->
   error_logger:info_msg("~p moved from ~p to ~p\n", [Id, From, To]),
