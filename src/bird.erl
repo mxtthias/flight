@@ -22,12 +22,12 @@
                  direction,
                  range     = 2,
                  movement  = 1,
-                 neighbors = [],
+                 neighbors = orddict:new(),
                  event_pid
                }).
 
 -type state()    :: #state{}.
--type neighbor() :: {position(), direction()}.
+-type neighbor() :: orddict:orddict().
 
 %%%===================================================================
 %%% API
@@ -175,13 +175,15 @@ valid_moves(#state{ neighbors = Neighbors,
 %% @doc Extract positions from a list of Neighbors.
 -spec neighbor_positions([neighbor()]) -> [position()].
 neighbor_positions(Neighbors) ->
-  [ Position || {Position, _Direction} <- Neighbors ].
+  NeighborsList = orddict:to_list(Neighbors),
+  [ Position || {_Id, {Position, _Direction}} <- NeighborsList ].
 
 %% @private
 %% @doc Extract directions from a list of Neighbors.
 -spec neighbor_directions([neighbor()]) -> [direction()].
 neighbor_directions(Neighbors) ->
-  [ Direction || {_Position, Direction} <- Neighbors ].
+  NeighborsList = orddict:to_list(Neighbors),
+  [ Direction || {_Id, {_Position, Direction}} <- NeighborsList ].
 
 %% @private
 %% @doc Calculate the average from a list of directions.
@@ -231,7 +233,9 @@ valid_moves_test_() ->
    [?_test(
        begin
          Position = {2, 3},
-         Neighbors = [{{2, 2}, n}, {{3, 4}, nw}],
+         Neighbors0 = orddict:new(),
+         Neighbors1 = orddict:store(a, {{2,2}, {0,-1}}, Neighbors0),
+         Neighbors  = orddict:store(b, {{3,4}, {1,1}}, Neighbors1),
          State = #state{ position = Position,
                          neighbors = Neighbors
                        },
@@ -270,6 +274,13 @@ desired_destination_test_() ->
   NeighborD = {{1, 4}, {1, -1}},
   NeighborE = {{3, 4}, {1, -1}},
 
+  Neighbors0 = orddict:new(),
+  Neighbors1 = orddict:store(a, NeighborA, Neighbors0),
+  Neighbors2 = orddict:store(b, NeighborB, Neighbors1),
+  Neighbors3 = orddict:store(c, NeighborC, Neighbors2),
+  Neighbors4 = orddict:store(d, NeighborD, Neighbors3),
+  Neighbors  = orddict:store(e, NeighborE, Neighbors4),
+
   Position  = {2, 2},
   Direction = {1, -1},
 
@@ -278,14 +289,9 @@ desired_destination_test_() ->
                 },
 
 
-  NoNeighbors = State#state{ neighbors = [] },
-  OneNeighbor = State#state{ neighbors = [ NeighborA ] },
-  AllNeighbors = State#state{ neighbors = [ NeighborA,
-                                            NeighborB,
-                                            NeighborC,
-                                            NeighborD,
-                                            NeighborE
-                                          ] },
+  NoNeighbors  = State#state{ neighbors = Neighbors0 },
+  OneNeighbor  = State#state{ neighbors = Neighbors1 },
+  AllNeighbors = State#state{ neighbors = Neighbors },
   [ ?_assertEqual({3, 1}, desired_destination(NoNeighbors)),
     ?_assertEqual({3, 2}, desired_destination(OneNeighbor)),
     ?_assertEqual({3, 2}, desired_destination(AllNeighbors))
@@ -336,12 +342,12 @@ determine_move_test_() ->
          Position  = {2, 2},
          Direction = {1, -1},
 
-         Neighbors = [ NeighborA,
-                       NeighborB,
-                       NeighborC,
-                       NeighborD,
-                       NeighborE
-                     ],
+         Neighbors0 = orddict:new(),
+         Neighbors1 = orddict:store(a, NeighborA, Neighbors0),
+         Neighbors2 = orddict:store(b, NeighborB, Neighbors1),
+         Neighbors3 = orddict:store(c, NeighborC, Neighbors2),
+         Neighbors4 = orddict:store(d, NeighborD, Neighbors3),
+         Neighbors  = orddict:store(e, NeighborE, Neighbors4),
 
          State = #state{ position  = Position,
                          direction = Direction,
