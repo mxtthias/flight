@@ -55,6 +55,9 @@ handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
 
+handle_cast({move, Id, From, To}, State) ->
+  NewState = handle_move(Id, From, To, State),
+  {noreply, NewState};
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
@@ -87,6 +90,35 @@ handle_trigger_event(#state{ position = From } = State) ->
   Direction = determine_direction(From, To),
   bird_event_manager:move(self(), From, To),
   State#state{ position = To, direction = Direction }.
+
+%% @private
+%% @doc Handle a move notification.
+handle_move(Id, From, To, State) ->
+  case is_within_range(To, State) of
+    true  -> update_neighbors(Id, From, To, State);
+    false -> maybe_remove_neighbor(Id, State)
+  end.
+
+%% @private
+%% @doc Remove entry from neighbors if it exists.
+-spec maybe_remove_neighbor(pid(), state()) -> state().
+maybe_remove_neighbor(Id, #state{ neighbors = Neighbors } = State) ->
+  NewNeighbors = orddict:erase(Id, Neighbors),
+  State#state{ neighbors = NewNeighbors }.
+
+%% @private
+%% @doc Add new or update existing neighbor.
+-spec update_neighbors(pid(), position(), position(), state()) -> state().
+update_neighbors(Id, From, To, #state{ neighbors = Neighbors } = State) ->
+  Direction    = determine_direction(From, To),
+  NewNeighbors = orddict:store(Id, {To, Direction}, Neighbors),
+  State#state{ neighbors = NewNeighbors }.
+
+%% @private
+%% @doc Determine if a position is within our range
+-spec is_within_range(position(), state()) -> boolean().
+is_within_range(OtherPos, #state{ position = MyPos, range = Range }) ->
+  calculate_distance(MyPos, OtherPos) =< Range.
 
 %% @private
 %% @doc Decide which is the best move we can make.
@@ -260,6 +292,15 @@ calculate_distance_test_() ->
     ?_assertEqual(3, calculate_distance({1, 2}, {3, 3}))
   ].
 
+is_within_distance_test_() ->
+  State = #state{ position = {1, 1}, range = 2 },
+  [ ?_assertEqual(true,  is_within_range({2, 2}, State)),
+    ?_assertEqual(true,  is_within_range({3, 3}, State)),
+    ?_assertEqual(true,  is_within_range({3, 1}, State)),
+    ?_assertEqual(false, is_within_range({3, 4}, State)),
+    ?_assertEqual(false, is_within_range({1, 4}, State))
+  ].
+
 determine_direction_test_() ->
   [ ?_assertEqual({0, 0},  determine_direction({1, 1}, {1, 1})),
     ?_assertEqual({0, 1},  determine_direction({1, 1}, {1, 3})),
@@ -373,6 +414,32 @@ random_direction_test_() ->
          ?assertEqual({-1, -1}, random_direction())
        end)
    ]}.
+
+handle_move_test_() ->
+  Position   = {1, 1},
+  Range      = 1,
+  Neighbors0 = orddict:new(),
+  Neighbors  = orddict:store(a, {{1, 2}, {1, 0}}, Neighbors0),
+  State      = #state{ position  = Position,
+                       range     = Range,
+                       neighbors = Neighbors },
+  ExistingNeighborWithinRange  = handle_move(a, {1, 2}, {2, 2}, State),
+  ExistingNeighborOutsideRange = handle_move(a, {1, 3}, {1, 4}, State),
+  NewNeighborWithinRange  = handle_move(b, {3, 3}, {2, 2}, State),
+  NewNeighborOutsideRange = handle_move(b, {3, 3}, {3, 4}, State),
+  [ ?_assertEqual(true,
+        orddict:is_key(a, ExistingNeighborWithinRange#state.neighbors)),
+    ?_assertEqual({{2, 2}, {1, 0}},
+        orddict:fetch(a, ExistingNeighborWithinRange#state.neighbors)),
+    ?_assertEqual(false,
+        orddict:is_key(a, ExistingNeighborOutsideRange#state.neighbors)),
+    ?_assertEqual(true,
+        orddict:is_key(b, NewNeighborWithinRange#state.neighbors)),
+    ?_assertEqual({{2, 2}, {-1, -1}},
+        orddict:fetch(b, NewNeighborWithinRange#state.neighbors)),
+    ?_assertEqual(false,
+        orddict:is_key(b, NewNeighborOutsideRange#state.neighbors))
+  ].
 
 mock_flight_world() ->
   meck:new(flight_world),

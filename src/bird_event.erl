@@ -35,7 +35,11 @@ init([WorkerPid]) ->
   {ok, #state{ worker_pid = WorkerPid }}.
 
 handle_event({move, {Id, From, To}}, State) ->
-  error_logger:info_msg("~p moved from ~p to ~p\n", [Id, From, To]),
+  WorkerPid = State#state.worker_pid,
+  case Id =:= WorkerPid of
+    true  -> ok;
+    false -> gen_server:cast(WorkerPid, {move, Id, From, To})
+  end,
   {ok, State};
 handle_event(_Event, State) ->
   {ok, State}.
