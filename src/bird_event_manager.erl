@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/0, add_handler/2, delete_handler/2]).
--export([move/3]).
+-export([move/3, introduce/2]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
@@ -30,6 +30,8 @@ delete_handler(Handler, Args) ->
 move(Pid, From, To) ->
   gen_event:notify(?SERVER, {move, Pid, From, To}).
 
+introduce(Pid, Position) ->
+  gen_event:notify(?SERVER, {introduce, Pid, Position}).
 
 %%%===================================================================
 %%% gen_event callbacks

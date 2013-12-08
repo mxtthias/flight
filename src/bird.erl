@@ -46,6 +46,7 @@ init([]) ->
   Direction = random_direction(),
   {ok, Pid} = bird_event:start_link(),
   bird_event:add_handler(self()),
+  bird_event_manager:introduce(erlang:pid_to_list(self()), Position),
   erlang:send_after(random_delay(), self(), trigger),
   {ok, #state{ position  = Position,
                direction = Direction,
@@ -55,6 +56,9 @@ handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
 
+handle_cast({introduce, Pid, Position, Direction}, State) ->
+  NewState = maybe_add_neighbor(Pid, Position, Direction, State),
+  {noreply, NewState};
 handle_cast({move, Id, From, To}, State) ->
   NewState = handle_move(Id, From, To, State),
   {noreply, NewState};
@@ -107,12 +111,28 @@ maybe_remove_neighbor(Id, #state{ neighbors = Neighbors } = State) ->
   State#state{ neighbors = NewNeighbors }.
 
 %% @private
+%% @doc Add neighbor if within range.
+-spec maybe_add_neighbor(pid(), position(), direction(), state()) -> state().
+maybe_add_neighbor(Pid, Position, Direction, State) ->
+  case is_within_range(Position, State) of
+    true  -> add_neighbor(Pid, Position, Direction, State);
+    false -> State
+  end.
+
+%% @private
+%% @doc Add neighbor.
+-spec add_neighbor(pid(), position(), direction(), state()) -> state().
+add_neighbor(Pid, Position, Direction,
+             #state{ neighbors = Neighbors } = State) ->
+  NewNeighbors = orddict:store(Pid, {Position, Direction}, Neighbors),
+  State#state{ neighbors = NewNeighbors }.
+
+%% @private
 %% @doc Add new or update existing neighbor.
 -spec update_neighbors(pid(), position(), position(), state()) -> state().
-update_neighbors(Id, From, To, #state{ neighbors = Neighbors } = State) ->
-  Direction    = determine_direction(From, To),
-  NewNeighbors = orddict:store(Id, {To, Direction}, Neighbors),
-  State#state{ neighbors = NewNeighbors }.
+update_neighbors(Id, From, To, State) ->
+  Direction = determine_direction(From, To),
+  add_neighbor(Id, To, Direction, State).
 
 %% @private
 %% @doc Determine if a position is within our range

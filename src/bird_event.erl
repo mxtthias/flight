@@ -41,6 +41,14 @@ handle_event({move, Pid, From, To}, State) ->
     false -> gen_server:cast(WorkerPid, {move, Pid, From, To})
   end,
   {ok, State};
+handle_event({introduce, Pid, Position, Direction}, State) ->
+  WorkerPid = State#state.worker_pid,
+  case Pid =:= WorkerPid of
+    true  -> ok;
+    false -> gen_server:cast(State#state.worker_pid,
+                             {introduce, Pid, Position, Direction})
+  end,
+  {ok, State};
 handle_event(_Event, State) ->
   {ok, State}.
 
