@@ -10,6 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+  {A1, A2, A3} = erlang:now(),
+  random:seed(A1, A2, A3),
   flight_sup:start_link().
 
 stop(_State) ->

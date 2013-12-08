@@ -42,8 +42,6 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-  {A1, A2, A3} = erlang:now(),
-  random:seed(A1, A2, A3),
   {ok, Pid} = bird_event:start_link(),
   bird_event:add_handler(self()),
   erlang:send_after(random_delay(), self(), trigger),
