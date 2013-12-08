@@ -128,6 +128,13 @@ desired_destination(#state{ neighbors = Neighbors,
 
 -spec find_best_move(position(), [position()]) -> position().
 find_best_move(DesiredDest, ValidMoves) ->
+  case flight_world:is_valid_position(DesiredDest) of
+    true  -> calculate_best_move(DesiredDest, ValidMoves);
+    false -> pick_random(ValidMoves)
+  end.
+
+-spec calculate_best_move(position(), [position()]) -> position().
+calculate_best_move(DesiredDest, ValidMoves) ->
   CalculateDistancesFun = fun(Pos, Acc) ->
                               Score = calculate_distance(DesiredDest, Pos),
                               orddict:append(Score, Pos, Acc)
@@ -285,8 +292,9 @@ desired_destination_test_() ->
   ].
 
 find_best_move_setup() ->
+  mock_flight_world(),
   mock_random(),
-  [random].
+  [flight_world, random].
 
 find_best_move_cleanup(MeckedModules) ->
   unmock(MeckedModules).
@@ -295,13 +303,15 @@ find_best_move_test_() ->
   {setup, fun find_best_move_setup/0, fun find_best_move_cleanup/1,
    [?_test(
        begin
-         DesiredDest = {3, 3},
+         DesiredDest = {2, 3},
+         InvalidDest = {3, 3},
          ValidMoves  = [{1, 1},
                         {1, 2},
                         {3, 2},
                         {2, 3}
                        ],
-         ?assertEqual({3, 2}, find_best_move(DesiredDest, ValidMoves))
+         ?assertEqual({2, 3}, find_best_move(DesiredDest, ValidMoves)),
+         ?assertEqual({1, 1}, find_best_move(InvalidDest, ValidMoves))
        end)
    ]}.
 
@@ -366,7 +376,11 @@ mock_flight_world() ->
                                               {X, Y + 1},
                                               {X + 1, Y + 1}
                                              ]
-                                         end).
+                                         end),
+  meck:expect(flight_world, is_valid_position, fun({2, 3}) -> true;
+                                                  ({3, 2}) -> true;
+                                                  (_)      -> false
+                                               end).
 
 mock_random() ->
   meck:new(random, [unstick, passthrough]),
