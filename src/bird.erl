@@ -42,10 +42,14 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
+  Position  = flight_world:random_position(),
+  Direction = random_direction(),
   {ok, Pid} = bird_event:start_link(),
   bird_event:add_handler(self()),
   erlang:send_after(random_delay(), self(), trigger),
-  {ok, #state{ event_pid = Pid }}.
+  {ok, #state{ position  = Position,
+               direction = Direction,
+               event_pid = Pid }}.
 
 handle_call(_Request, _From, State) ->
   Reply = ok,
@@ -193,6 +197,15 @@ calculate_distance({FromX, FromY}, {ToX, ToY}) ->
     _            -> DistanceX + DistanceY
   end.
 
+%% @private
+%% @doc Get a random direction.
+-spec random_direction() -> direction().
+random_direction() ->
+  Directions = [ {-1, -1}, {0, -1}, {1, -1},
+                 {-1, 0},           {1, 0},
+                 {-1, 1},  {0, 1},  {1, 1} ],
+  lists:nth(random:uniform(length(Directions)), Directions).
+
 %%%===================================================================
 %%% EUnit tests
 %%%===================================================================
@@ -327,6 +340,21 @@ determine_move_test_() ->
 
          %% we 'randomly' pick the first valid move
          ?assertEqual({2, 3}, determine_move(State))
+       end)
+   ]}.
+
+random_direction_setup() ->
+  mock_random(),
+  [random].
+
+random_direction_cleanup(MeckedModules) ->
+  unmock(MeckedModules).
+
+random_direction_test_() ->
+  {setup, fun random_direction_setup/0, fun random_direction_cleanup/1,
+   [?_test(
+       begin
+         ?assertEqual({-1, -1}, random_direction())
        end)
    ]}.
 
