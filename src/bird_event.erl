@@ -34,11 +34,11 @@ delete_handler() ->
 init([WorkerPid]) ->
   {ok, #state{ worker_pid = WorkerPid }}.
 
-handle_event({move, {Id, From, To}}, State) ->
+handle_event({move, Pid, From, To}, State) ->
   WorkerPid = State#state.worker_pid,
-  case Id =:= WorkerPid of
+  case Pid =:= WorkerPid of
     true  -> ok;
-    false -> gen_server:cast(WorkerPid, {move, Id, From, To})
+    false -> gen_server:cast(WorkerPid, {move, Pid, From, To})
   end,
   {ok, State};
 handle_event(_Event, State) ->

@@ -88,7 +88,7 @@ random_delay() ->
 handle_trigger_event(#state{ position = From } = State) ->
   To        = determine_move(State),
   Direction = determine_direction(From, To),
-  bird_event_manager:move(self(), From, To),
+  bird_event_manager:move(erlang:pid_to_list(self()), From, To),
   State#state{ position = To, direction = Direction }.
 
 %% @private

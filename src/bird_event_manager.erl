@@ -27,8 +27,9 @@ add_handler(Handler, Args) ->
 delete_handler(Handler, Args) ->
   gen_event:delete_handler(?SERVER, Handler, Args).
 
-move(Id, From, To) ->
-  gen_event:notify(?SERVER, {move, {Id, From, To}}).
+move(Pid, From, To) ->
+  gen_event:notify(?SERVER, {move, Pid, From, To}).
+
 
 %%%===================================================================
 %%% gen_event callbacks
