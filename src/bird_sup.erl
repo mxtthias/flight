@@ -3,7 +3,8 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, start_child/0]).
+-export([start_link/0]).
+-export([add_bird/0, add_birds/0, add_birds/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -17,7 +18,13 @@
 start_link() ->
   supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_child() ->
+add_birds() ->
+  add_birds(20).
+
+add_birds(N) ->
+  [ add_bird() || _ <- lists:seq(1, N) ].
+
+add_bird() ->
   supervisor:start_child(?SERVER, []).
 
 
