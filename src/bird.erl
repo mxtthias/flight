@@ -16,7 +16,6 @@
 -endif.
 
 -define(SERVER, ?MODULE).
--define(SLEEP_TIME, 2000).
 
 -record(state, { position,
                  direction,
