@@ -18,11 +18,13 @@ is in your $PATH.
 Running
 -------
 
+```
 $ cd flight
 $ make && make test
 $ erl -pa ebin -s flight_app start
 
 1> bird_sup:add_birds().
+```
 
 If you want to add more individuals, you can use bird_sup:add_birds/2
 or bird_sup:add_bird/0 as well.
@@ -38,8 +40,10 @@ messages.
 There are two types of events: introduce and move. The messages have
 the following format:
 
+```
 {introduce, Pid, Position, Direction}
 {move, Pid, From, To}
+```
 
 
 Design
@@ -63,6 +67,6 @@ gen_event than in doing things right.
 TODO
 ----
 
-[ ] Add flock 'gravitation'
-[ ] Handle individuals bumping into each other
+- [ ] Add flock 'gravitation'
+- [ ] Handle individuals bumping into each other
 
