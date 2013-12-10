@@ -83,7 +83,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 random_delay() ->
-  500 + random:uniform(15) * 100.
+  100 + random:uniform(4) * 100.
 
 %% @private
 %% @doc Move and notify the surrounding.
