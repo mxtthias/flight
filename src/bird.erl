@@ -21,8 +21,7 @@
                  direction,
                  range     = 2,
                  movement  = 1,
-                 neighbors = orddict:new(),
-                 event_pid
+                 neighbors = orddict:new()
                }).
 
 -type state()    :: #state{}.
@@ -43,13 +42,11 @@ start_link() ->
 init([]) ->
   Position  = flight_world:random_position(),
   Direction = random_direction(),
-  {ok, Pid} = bird_event:start_link(),
   bird_event:add_handler(self()),
   bird_event_manager:introduce(erlang:pid_to_list(self()), Position),
   erlang:send_after(random_delay(), self(), trigger),
   {ok, #state{ position  = Position,
-               direction = Direction,
-               event_pid = Pid }}.
+               direction = Direction }}.
 
 handle_call(_Request, _From, State) ->
   Reply = ok,
