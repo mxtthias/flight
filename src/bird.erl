@@ -142,7 +142,9 @@ is_within_range(OtherPos, #state{ position = MyPos, range = Range }) ->
 determine_move(State) ->
   DesiredDest = desired_destination(State),
   ValidMoves  = valid_moves(State),
-  find_best_move(DesiredDest, ValidMoves).
+  if ValidMoves =:= [] -> State#state.position;
+     true              -> find_best_move(DesiredDest, ValidMoves)
+  end.
 
 %% @private
 %% @doc Determine which direction you move in when going from one
